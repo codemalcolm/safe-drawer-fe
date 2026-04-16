@@ -1,41 +1,8 @@
-import { Card, AccessLog, Device, Notification } from "./types";
+import { AccessLog, Device, Notification } from "./types";
 
-// ─── Seed data ────────────────────────────────────────────────────────────────
-
-export const INITIAL_CARDS: Card[] = [
-  {
-    id: "A1B2C3D4",
-    note: "Jan Novák – vedoucí skladu",
-    isAuthorized: true,
-    createdAt: "2025-01-15T09:00:00Z",
-    updatedAt: "2025-03-10T14:22:00Z",
-    lastUsed: "2025-03-28T08:45:00Z",
-  },
-  {
-    id: "F9E8D7C6",
-    note: "Marie Svobodová",
-    isAuthorized: false,
-    createdAt: "2025-02-03T11:30:00Z",
-    updatedAt: "2025-03-01T10:00:00Z",
-    lastUsed: "2025-03-15T16:20:00Z",
-  },
-  {
-    id: "1234ABCD",
-    note: "",
-    isAuthorized: true,
-    createdAt: "2025-03-01T08:00:00Z",
-    updatedAt: "2025-03-01T08:00:00Z",
-    lastUsed: undefined,
-  },
-  {
-    id: "DEAD0001",
-    note: "Testovací karta",
-    isAuthorized: false,
-    createdAt: "2024-12-20T12:00:00Z",
-    updatedAt: "2025-01-05T09:15:00Z",
-    lastUsed: "2025-01-05T09:15:00Z",
-  },
-];
+// Cards are now fetched from the real API (/api/v1/cards).
+// The mock data below is kept only for Access Logs, Device status,
+// and Notifications — until those endpoints are also ready.
 
 export const INITIAL_LOGS: AccessLog[] = [
   { id: "L001", cardId: "A1B2C3D4", timestamp: "2025-03-28T08:45:00Z", result: "success" },
@@ -73,8 +40,6 @@ export const INITIAL_NOTIFICATIONS: Notification[] = [
     time: "2025-03-28T10:00:00Z",
   },
 ];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 export function uid(): string {
   return Math.random().toString(36).slice(2, 10).toUpperCase();

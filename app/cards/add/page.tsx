@@ -4,43 +4,63 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
-import { uid } from "@/lib/mockDb";
+import { CARDS_API } from "@/config/variables";
 import Button from "@/components/Button";
 import Switch from "@/components/Switch";
 import OfflineWarning from "@/components/OfflineWarning";
 
 export default function AddCardPage() {
   const router = useRouter();
-  const { cards, addCard, device, addToast } = useStore();
+  const { device, addToast } = useStore();
 
-  const [cardId, setCardId] = useState("");
-  const [note, setNote] = useState("");
+  const [cardId,     setCardId]     = useState("");
+  const [note,       setNote]       = useState("");
   const [authorized, setAuthorized] = useState(false);
-  const [error, setError] = useState("");
+  const [fieldError, setFieldError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit() {
-    const trimmed = cardId.trim().toUpperCase();
-
-    if (!trimmed) {
-      setError("ID karty je povinné.");
-      return;
-    }
-    if (cards.find((c) => c.id === trimmed)) {
-      setError("Karta s tímto ID již existuje v systému.");
+  async function handleSubmit() {
+    const trimmedId = cardId.trim().toUpperCase();
+    if (!trimmedId) {
+      setFieldError("ID karty je povinné.");
       return;
     }
 
-    const now = new Date().toISOString();
-    addCard({
-      id: trimmed,
-      note: note.trim(),
-      isAuthorized: authorized,
-      createdAt: now,
-      updatedAt: now,
-    });
+    setSubmitting(true);
+    try {
+      const res = await fetch(CARDS_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: trimmedId,
+          note: note.trim(),
+          isAuthorized: authorized,
+        }),
+      });
 
-    addToast(`Karta ${trimmed} byla úspěšně registrována.`, "success");
-    router.push("/cards");
+      if (res.status === 400) {
+        const body = await res.json().catch(() => ({}));
+        const msg = body?.message ?? "Chyba validace na straně serveru.";
+        console.error("[AddCard] 400 Bad Request:", body);
+        addToast(`Chyba při vytváření karty: ${msg}`, "error");
+        return;
+      }
+
+      if (res.status === 500 || !res.ok) {
+        console.error("[AddCard] Server error:", res.status);
+        addToast("Chyba při vytváření karty.", "error");
+        return;
+      }
+
+      // 201 Created
+      addToast(`Karta ${trimmedId} byla úspěšně registrována.`, "success");
+      router.push("/cards");
+    } catch (err) {
+      console.error("[AddCard] Network error:", err);
+      addToast("Nelze se připojit k serveru.", "error");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -63,11 +83,11 @@ export default function AddCardPage() {
           <input
             type="text"
             value={cardId}
-            onChange={(e) => { setCardId(e.target.value); setError(""); }}
+            onChange={(e) => { setCardId(e.target.value); setFieldError(""); }}
             placeholder="např. AB12CD34"
             className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 bg-slate-50 focus:outline-none focus:border-teal focus:ring-2 focus:ring-teal/10 focus:bg-white transition-all"
           />
-          {error && <p className="text-red-500 text-xs mt-1.5">{error}</p>}
+          {fieldError && <p className="text-red-500 text-xs mt-1.5">{fieldError}</p>}
         </div>
 
         {/* Note */}
@@ -94,11 +114,12 @@ export default function AddCardPage() {
           />
         </div>
 
-        {/* Actions */}
         <div className="flex gap-3">
-          <Button onClick={handleSubmit}>Potvrdit</Button>
+          <Button onClick={handleSubmit} loading={submitting}>
+            Potvrdit
+          </Button>
           <Link href="/cards">
-            <Button variant="outline">Zrušit</Button>
+            <Button variant="outline" disabled={submitting}>Zrušit</Button>
           </Link>
         </div>
       </div>

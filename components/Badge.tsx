@@ -30,13 +30,11 @@ interface Props {
 
 export default function Badge({ variant, label, className }: Props) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold font-mono border",
-        styles[variant],
-        className
-      )}
-    >
+    <span className={cn(
+      "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold font-mono border",
+      styles[variant],
+      className
+    )}>
       {label ?? labels[variant]}
     </span>
   );

@@ -2,25 +2,23 @@
 
 import React, { createContext, useCallback, useContext, useState } from "react";
 import {
-  INITIAL_CARDS,
   INITIAL_DEVICE,
   INITIAL_LOGS,
   INITIAL_NOTIFICATIONS,
   uid,
 } from "./mockDb";
-import { Card, AccessLog, Device, Notification, Toast } from "./types";
+import { AccessLog, Device, Notification, Toast } from "./types";
 
-// ─── Context shape ────────────────────────────────────────────────────────────
+// Cards are intentionally NOT stored here anymore.
+// Each /cards page fetches directly from the API so the data is always fresh.
+// The store still manages: logs, device, notifications, toasts.
 
 interface StoreCtx {
-  cards: Card[];
   logs: AccessLog[];
   device: Device;
   notifications: Notification[];
   toasts: Toast[];
 
-  addCard: (card: Card) => void;
-  updateCard: (id: string, patch: Partial<Card>) => void;
   addLog: (log: Omit<AccessLog, "id">) => void;
   toggleDevice: () => void;
   addToast: (msg: string, type?: Toast["type"]) => void;
@@ -30,24 +28,11 @@ interface StoreCtx {
 
 const StoreContext = createContext<StoreCtx | null>(null);
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
-
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [cards, setCards] = useState<Card[]>(INITIAL_CARDS);
   const [logs, setLogs] = useState<AccessLog[]>(INITIAL_LOGS);
   const [device, setDevice] = useState<Device>(INITIAL_DEVICE);
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
   const [toasts, setToasts] = useState<Toast[]>([]);
-
-  const addCard = useCallback((card: Card) => {
-    setCards((prev) => [...prev, card]);
-  }, []);
-
-  const updateCard = useCallback((id: string, patch: Partial<Card>) => {
-    setCards((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, ...patch, updatedAt: new Date().toISOString() } : c))
-    );
-  }, []);
 
   const addLog = useCallback((log: Omit<AccessLog, "id">) => {
     setLogs((prev) => [{ ...log, id: uid() }, ...prev]);
@@ -88,13 +73,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   return (
     <StoreContext.Provider
       value={{
-        cards,
         logs,
         device,
         notifications,
         toasts,
-        addCard,
-        updateCard,
         addLog,
         toggleDevice,
         addToast,
@@ -106,8 +88,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     </StoreContext.Provider>
   );
 }
-
-// ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useStore() {
   const ctx = useContext(StoreContext);

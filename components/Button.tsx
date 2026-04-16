@@ -23,15 +23,7 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
 }
 
-export default function Button({
-  variant = "primary",
-  size = "md",
-  loading = false,
-  className,
-  children,
-  disabled,
-  ...props
-}: Props) {
+export default function Button({ variant = "primary", size = "md", loading = false, className, children, disabled, ...props }: Props) {
   return (
     <button
       className={cn(
@@ -44,11 +36,9 @@ export default function Button({
       disabled={disabled || loading}
       {...props}
     >
-      {loading ? (
-        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-      ) : (
-        children
-      )}
+      {loading
+        ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        : children}
     </button>
   );
 }

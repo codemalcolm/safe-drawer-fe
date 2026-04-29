@@ -100,7 +100,7 @@ export default function AddDrawerModal({ isOpen, onClose }: Props) {
 
   return createPortal(
     <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 anim-fade-in"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[999] p-4 anim-fade-in"
       onClick={onClose}
     >
       <div
@@ -173,16 +173,39 @@ export default function AddDrawerModal({ isOpen, onClose }: Props) {
               </button>
             </div>
 
-            {/* Conditional Input Slot */}
-            {!isImportMode ? (
-              <input
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 outline-none font-mono text-sm"
-                placeholder="Zadejte ID zařízení..."
-                value={piId}
-                onChange={(e) => setPiId(e.target.value)}
-              />
-            ) : (
-              <div className="relative">
+            {/* smooth transition container */}
+            <div
+              className="relative overflow-hidden transition-[height] duration-500 ease-in-out"
+              style={{
+                height: isImportMode ? (fileName ? "72px" : "130px") : "42px",
+              }}
+            >
+              {/* Manual Input View */}
+              <div
+                className={cn(
+                  "absolute inset-x-0 top-0 transition-all duration-500 ease-in-out transform",
+                  isImportMode
+                    ? "opacity-0 -translate-y-4 pointer-events-none"
+                    : "opacity-100 translate-y-0",
+                )}
+              >
+                <input
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 outline-none font-mono text-sm"
+                  placeholder="Zadejte ID zařízení..."
+                  value={piId}
+                  onChange={(e) => setPiId(e.target.value)}
+                />
+              </div>
+
+              {/* Import/File View */}
+              <div
+                className={cn(
+                  "absolute inset-x-0 top-0 transition-all duration-500 ease-in-out transform",
+                  isImportMode
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-4 pointer-events-none",
+                )}
+              >
                 {!fileName ? (
                   <div
                     onDragOver={(e) => {
@@ -200,7 +223,7 @@ export default function AddDrawerModal({ isOpen, onClose }: Props) {
                       document.getElementById("file-upload")?.click()
                     }
                     className={cn(
-                      "border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center transition-all cursor-pointer py-10",
+                      "border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center transition-all cursor-pointer h-[130px]",
                       isDragging
                         ? "border-sky-500 bg-sky-50"
                         : "border-slate-200 bg-slate-50 hover:bg-slate-100",
@@ -222,7 +245,7 @@ export default function AddDrawerModal({ isOpen, onClose }: Props) {
                     </p>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between p-3.5 bg-sky-50 border border-sky-100 rounded-xl group transition-all">
+                  <div className="flex items-center justify-between p-3.5 bg-sky-50 border border-sky-100 rounded-xl h-[72px]">
                     <div className="flex items-center gap-3 overflow-hidden">
                       <FileJson className="w-5 h-5 text-sky-500 shrink-0" />
                       <div className="overflow-hidden">
@@ -246,7 +269,7 @@ export default function AddDrawerModal({ isOpen, onClose }: Props) {
                   </div>
                 )}
               </div>
-            )}
+            </div>
           </div>
         </div>
 

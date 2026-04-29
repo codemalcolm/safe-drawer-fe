@@ -27,7 +27,7 @@ export default function ModalWrapper({ isOpen, onClose, children }: ModalWrapper
 
   return createPortal(
     <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 anim-fade-in"
+      className="fixed inset-0 bg-slate-400/25 backdrop-blur-sm flex items-center justify-center z-[999] p-4 anim-fade-in"
       onClick={onClose}
     >
       {/* stopPropagation prevents clicking the modal content from closing the modal */}

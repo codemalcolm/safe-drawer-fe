@@ -19,13 +19,15 @@ export default function SettingsTab({ drawer }: Props) {
 
   function handleDelete() {
     deleteDrawer(drawer.id);
-    addToast(`Šuplík „${drawer.name}" byl smazán.`, "warning");
+    addToast(`Šuplík „${drawer.drawerName}" byl smazán.`, "warning");
     router.push("/");
   }
 
   return (
     <div>
-      <h2 className="font-mono font-semibold text-slate-900 mb-6">Nastavení šuplíku</h2>
+      <h2 className="font-mono font-semibold text-slate-900 mb-6">
+        Nastavení šuplíku
+      </h2>
 
       <div className="max-w-lg space-y-6">
         {/* Info section */}
@@ -35,13 +37,25 @@ export default function SettingsTab({ drawer }: Props) {
           </h3>
           <div className="bg-slate-50 border border-slate-200 rounded-xl divide-y divide-slate-200">
             <InfoRow label="ID šuplíku" value={drawer.id} mono />
-            <InfoRow label="Název" value={drawer.name} />
-            <InfoRow label="Umístění" value={drawer.location} />
-            {drawer.description && <InfoRow label="Popis" value={drawer.description} />}
-            <InfoRow label="Stav zámku" value={drawer.isLocked ? "Zamčeno" : "Odemčeno"} />
-            <InfoRow label="Připojení" value={drawer.isOnline ? "Online" : "Offline"} />
+            <InfoRow label="Název" value={drawer.drawerName} />
+            <InfoRow label="Umístění" value={drawer.drawerLocation} />
+            {drawer.description && (
+              <InfoRow label="Popis" value={drawer.description} />
+            )}
+            <InfoRow
+              label="Stav zámku"
+              value={drawer.isLocked ? "Zamčeno" : "Odemčeno"}
+            />
+            <InfoRow
+              label="Připojení"
+              value={drawer.isOnline ? "Online" : "Offline"}
+            />
             <InfoRow label="Vytvořeno" value={fmtDate(drawer.createdAt)} mono />
-            <InfoRow label="Aktualizováno" value={fmtDate(drawer.updatedAt)} mono />
+            <InfoRow
+              label="Aktualizováno"
+              value={fmtDate(drawer.updatedAt)}
+              mono
+            />
           </div>
         </div>
 
@@ -53,9 +67,12 @@ export default function SettingsTab({ drawer }: Props) {
           <div className="border border-red-200 rounded-xl p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="font-semibold text-slate-900 mb-1">Smazat tento šuplík</p>
+                <p className="font-semibold text-slate-900 mb-1">
+                  Smazat tento šuplík
+                </p>
                 <p className="text-sm text-slate-500">
-                  Trvale odstraní šuplík včetně všech přiřazených karet a historie. Tato akce je nevratná.
+                  Trvale odstraní šuplík včetně všech přiřazených karet a
+                  historie. Tato akce je nevratná.
                 </p>
               </div>
               <button
@@ -84,11 +101,21 @@ export default function SettingsTab({ drawer }: Props) {
   );
 }
 
-function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+function InfoRow({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
   return (
     <div className="flex justify-between items-baseline px-4 py-3 gap-4">
       <span className="text-sm text-slate-500 shrink-0">{label}</span>
-      <span className={`text-sm font-medium text-slate-800 text-right break-all ${mono ? "font-mono" : ""}`}>
+      <span
+        className={`text-sm font-medium text-slate-800 text-right break-all ${mono ? "font-mono" : ""}`}
+      >
         {value}
       </span>
     </div>

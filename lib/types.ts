@@ -14,8 +14,8 @@ export interface DrawerIdk {
 
 export interface Drawer {
   id: string;
-  name: string;
-  location: string;
+  drawerName: string;
+  drawerLocation: string;
   description?: string;
   raspberryPiId: string;
   isLocked: boolean;

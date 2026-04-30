@@ -147,8 +147,8 @@ export default function DrawerDetailPage() {
         isEdit={true}
         drawerId={drawer.id}
         defaultValues={{
-          name: drawer.name,
-          location: drawer.location,
+          name: drawer.drawerName,
+          location: drawer.drawerLocation,
           description: drawer.description || "",
           isLocked: drawer.isLocked,
         }}

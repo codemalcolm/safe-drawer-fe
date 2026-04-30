@@ -5,6 +5,7 @@ import { X, Upload, FileJson, Trash2 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import ModalWrapper from "./ModalWrapper";
+import { deviceService } from "@/lib/api";
 
 interface Props {
   isOpen: boolean;
@@ -12,7 +13,7 @@ interface Props {
 }
 
 export default function AddDrawerModal({ isOpen, onClose }: Props) {
-  const { addToast } = useStore();
+  const { addToast, fetchDrawers } = useStore();
   const [mounted, setMounted] = useState(false);
 
   // Form State
@@ -76,23 +77,19 @@ export default function AddDrawerModal({ isOpen, onClose }: Props) {
 
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_LOCAL_API_URL;
-      const response = await fetch(`${apiUrl}/devices`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          drawerName: name,
-          drawerLocation: location,
-          raspberryPiId: piId,
-        }),
+      setLoading(true);
+      // Call the service directly or through a store action
+      await deviceService.claimDevice({
+        drawerName: name,
+        drawerLocation: location,
+        raspberryPiId: piId,
       });
 
-      if (!response.ok) throw new Error();
-
-      addToast("Zařízení bylo úspěšně vytvořeno", "success");
-      onClose(); // This triggers the useEffect reset
-    } catch (error) {
-      addToast("Chyba při odesílání dat", "error");
+      await fetchDrawers(); // Refresh the list in the store
+      addToast("Zařízení přidáno", "success");
+      onClose();
+    } catch (err) {
+      addToast("Chyba při ukládání", "error");
     } finally {
       setLoading(false);
     }

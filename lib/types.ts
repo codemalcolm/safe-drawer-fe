@@ -1,8 +1,23 @@
+export interface DrawerIdk {
+  id: string;
+  drawerName: string;
+  drawerLocation: string;
+  raspberryPiId: string;
+  description?: string;
+  isLocked: boolean;
+  isOnline: boolean;
+  hasIncident?: boolean;
+  lastUsed?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Drawer {
   id: string;
   name: string;
   location: string;
   description?: string;
+  raspberryPiId: string;
   isLocked: boolean;
   isOnline: boolean;
   hasIncident?: boolean;

@@ -4,9 +4,20 @@ export function uid(): string {
   return Math.random().toString(36).slice(2, 10).toUpperCase();
 }
 
-export function fmtDate(iso?: string): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("cs-CZ", {
+export function fmtDate(dateInput?: string | number): string {
+  if (!dateInput) return "—";
+
+  // If the input is a string that looks like a number -> convert it to a number
+  const parsedValue = typeof dateInput === "string" && /^\d+$/.test(dateInput) 
+    ? parseInt(dateInput, 10) 
+    : dateInput;
+
+  const date = new Date(parsedValue);
+
+  // Check if the date is actually valid
+  if (isNaN(date.getTime())) return "Invalidní datum";
+
+  return date.toLocaleString("cs-CZ", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -14,7 +25,6 @@ export function fmtDate(iso?: string): string {
     minute: "2-digit",
   });
 }
-
 export const INITIAL_DRAWERS: Drawer[] = [
   {
     id: "DRW-001",

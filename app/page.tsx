@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
 import { fmtDate, uid } from "@/lib/mockDb";
 import { Drawer } from "@/lib/types";
@@ -9,8 +9,12 @@ import AddDrawerTile from "@/components/AddDrawerTile";
 import AddDrawerModal from "@/components/AddDrawerModal";
 
 export default function DashboardPage() {
-  const { drawers } = useStore();
+  const { drawers, fetchDrawers } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    fetchDrawers();
+  }, [fetchDrawers]);
 
   return (
     <div className="anim-fade-up">
@@ -20,7 +24,13 @@ export default function DashboardPage() {
             Přehled šuplíků
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            {drawers.length} {drawers.length === 1 ? "šuplík" : drawers.length < 5 ? "šuplíky" : "šuplíků"} v systému
+            {drawers.length}{" "}
+            {drawers.length === 1
+              ? "šuplík"
+              : drawers.length < 5
+                ? "šuplíky"
+                : "šuplíků"}{" "}
+            v systému
           </p>
         </div>
       </div>

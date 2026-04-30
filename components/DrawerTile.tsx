@@ -47,9 +47,9 @@ export default function DrawerTile({ drawer }: Props) {
 
       {/* Name & location */}
       <h3 className="font-semibold text-slate-900 text-base mb-1 group-hover:text-sky-700 transition-colors">
-        {drawer.name}
+        {drawer.drawerName}
       </h3>
-      <p className="text-sm text-slate-400 mb-4 truncate">{drawer.location}</p>
+      <p className="text-sm text-slate-400 mb-4 truncate">{drawer.drawerLocation}</p>
 
       {/* Status badges */}
       <div className="flex items-center gap-2 flex-wrap">

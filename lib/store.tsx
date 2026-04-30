@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useState } from "react";
+import { deviceService } from "./api";
 import {
   INITIAL_CARDS,
   INITIAL_DRAWERS,
@@ -17,6 +18,7 @@ interface StoreCtx {
   systemLogs: SystemLog[];
   toasts: Toast[];
 
+  fetchDrawers: () => Promise<void>;
   addDrawer: (drawer: Omit<Drawer, "id" | "createdAt" | "updatedAt">) => string;
   updateDrawer: (id: string, patch: Partial<Drawer>) => void;
   deleteDrawer: (id: string) => void;
@@ -30,6 +32,7 @@ interface StoreCtx {
 
   addToast: (msg: string, type?: Toast["type"]) => void;
   removeToast: (id: string) => void;
+
 }
 
 const StoreContext = createContext<StoreCtx | null>(null);
@@ -37,21 +40,51 @@ const StoreContext = createContext<StoreCtx | null>(null);
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [drawers, setDrawers] = useState<Drawer[]>(INITIAL_DRAWERS);
   const [cards, setCards] = useState<RFIDCard[]>(INITIAL_CARDS);
-  const [accessLogs, setAccessLogs] = useState<AccessLog[]>(INITIAL_ACCESS_LOGS);
-  const [systemLogs, setSystemLogs] = useState<SystemLog[]>(INITIAL_SYSTEM_LOGS);
+  const [accessLogs, setAccessLogs] =
+    useState<AccessLog[]>(INITIAL_ACCESS_LOGS);
+  const [systemLogs, setSystemLogs] =
+    useState<SystemLog[]>(INITIAL_SYSTEM_LOGS);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   // ─── Drawers ──────────────────────────────────────────────────────────────
-  const addDrawer = useCallback((data: Omit<Drawer, "id" | "createdAt" | "updatedAt">): string => {
-    const now = new Date().toISOString();
-    const id = `DRW-${uid()}`;
-    setDrawers((prev) => [...prev, { ...data, id, createdAt: now, updatedAt: now }]);
-    return id;
-  }, []);
+const fetchDrawers = useCallback(async () => {
+  try {
+    const apiDrawers = await deviceService.getAll(); // Get data from endpoint
+    
+    setDrawers((prev) => {
+
+      // Smart merge -> mock data and real data !!DON'T REMOVE!!
+      const existingIds = new Set(INITIAL_DRAWERS.map(d => d.id));
+      const uniqueApiDrawers = apiDrawers.filter(d => !existingIds.has(d.id));
+      
+      return [...INITIAL_DRAWERS, ...uniqueApiDrawers];
+    });
+  } catch (error) {
+    console.error("Fetch error:", error);
+    addToast("Nepodařilo se načíst nová data", "error");
+  }
+}, []);
+
+  const addDrawer = useCallback(
+    (data: Omit<Drawer, "id" | "createdAt" | "updatedAt">): string => {
+      const now = new Date().toISOString();
+      const id = `DRW-${uid()}`;
+      setDrawers((prev) => [
+        ...prev,
+        { ...data, id, createdAt: now, updatedAt: now },
+      ]);
+      return id;
+    },
+    [],
+  );
 
   const updateDrawer = useCallback((id: string, patch: Partial<Drawer>) => {
     setDrawers((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, ...patch, updatedAt: new Date().toISOString() } : d))
+      prev.map((d) =>
+        d.id === id
+          ? { ...d, ...patch, updatedAt: new Date().toISOString() }
+          : d,
+      ),
     );
   }, []);
 
@@ -63,14 +96,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // ─── Cards ────────────────────────────────────────────────────────────────
-  const addCard = useCallback((data: Omit<RFIDCard, "id" | "createdAt" | "updatedAt">) => {
-    const now = new Date().toISOString();
-    setCards((prev) => [...prev, { ...data, id: uid(), createdAt: now, updatedAt: now }]);
-  }, []);
+  const addCard = useCallback(
+    (data: Omit<RFIDCard, "id" | "createdAt" | "updatedAt">) => {
+      const now = new Date().toISOString();
+      setCards((prev) => [
+        ...prev,
+        { ...data, id: uid(), createdAt: now, updatedAt: now },
+      ]);
+    },
+    [],
+  );
 
   const updateCard = useCallback((id: string, patch: Partial<RFIDCard>) => {
     setCards((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, ...patch, updatedAt: new Date().toISOString() } : c))
+      prev.map((c) =>
+        c.id === id
+          ? { ...c, ...patch, updatedAt: new Date().toISOString() }
+          : c,
+      ),
     );
   }, []);
 
@@ -88,11 +131,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // ─── Toasts ───────────────────────────────────────────────────────────────
-  const addToast = useCallback((msg: string, type: Toast["type"] = "success") => {
-    const id = uid();
-    setToasts((prev) => [...prev, { id, msg, type }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4500);
-  }, []);
+  const addToast = useCallback(
+    (msg: string, type: Toast["type"] = "success") => {
+      const id = uid();
+      setToasts((prev) => [...prev, { id, msg, type }]);
+      setTimeout(
+        () => setToasts((prev) => prev.filter((t) => t.id !== id)),
+        4500,
+      );
+    },
+    [],
+  );
 
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -101,11 +150,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   return (
     <StoreContext.Provider
       value={{
-        drawers, cards, accessLogs, systemLogs, toasts,
-        addDrawer, updateDrawer, deleteDrawer,
-        addCard, updateCard, deleteCard,
-        addAccessLog, addSystemLog,
-        addToast, removeToast,
+        drawers,
+        cards,
+        accessLogs,
+        systemLogs,
+        toasts,
+        fetchDrawers,
+        addDrawer,
+        updateDrawer,
+        deleteDrawer,
+        addCard,
+        updateCard,
+        deleteCard,
+        addAccessLog,
+        addSystemLog,
+        addToast,
+        removeToast,
       }}
     >
       {children}

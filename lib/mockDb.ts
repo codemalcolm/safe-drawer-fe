@@ -4,9 +4,20 @@ export function uid(): string {
   return Math.random().toString(36).slice(2, 10).toUpperCase();
 }
 
-export function fmtDate(iso?: string): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("cs-CZ", {
+export function fmtDate(dateInput?: string | number): string {
+  if (!dateInput) return "—";
+
+  // If the input is a string that looks like a number -> convert it to a number
+  const parsedValue = typeof dateInput === "string" && /^\d+$/.test(dateInput) 
+    ? parseInt(dateInput, 10) 
+    : dateInput;
+
+  const date = new Date(parsedValue);
+
+  // Check if the date is actually valid
+  if (isNaN(date.getTime())) return "Invalidní datum";
+
+  return date.toLocaleString("cs-CZ", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -14,12 +25,12 @@ export function fmtDate(iso?: string): string {
     minute: "2-digit",
   });
 }
-
 export const INITIAL_DRAWERS: Drawer[] = [
   {
     id: "DRW-001",
-    name: "Sklad A",
-    location: "Přízemí – Sklady",
+    drawerName: "Sklad A",
+    drawerLocation: "Přízemí – Sklady",
+    raspberryPiId: "0000sd02a5",
     description: "Hlavní skladový prostor pro elektroniku",
     isLocked: true,
     isOnline: true,
@@ -30,8 +41,9 @@ export const INITIAL_DRAWERS: Drawer[] = [
   },
   {
     id: "DRW-002",
-    name: "Kancelář – Archiv",
-    location: "2. patro – Administrativní část",
+    drawerName: "Kancelář – Archiv",
+    drawerLocation: "2. patro – Administrativní část",
+    raspberryPiId: "000022515",
     description: "Archivní dokumenty a smlouvy",
     isLocked: false,
     isOnline: false,
@@ -42,8 +54,9 @@ export const INITIAL_DRAWERS: Drawer[] = [
   },
   {
     id: "DRW-003",
-    name: "Serverovna",
-    location: "Suterén",
+    drawerName: "Serverovna",
+    drawerLocation: "Suterén",
+    raspberryPiId: "0005s6a1d6",
     description: "Přístup k serverovým skříním",
     isLocked: true,
     isOnline: true,
@@ -54,8 +67,9 @@ export const INITIAL_DRAWERS: Drawer[] = [
   },
   {
     id: "DRW-004",
-    name: "Laboratoř",
-    location: "1. patro – Vývojové oddělení",
+    drawerName: "Laboratoř",
+    drawerLocation: "1. patro – Vývojové oddělení",
+    raspberryPiId: "00x66sd2a6",
     isLocked: true,
     isOnline: false,
     hasIncident: false,
@@ -128,18 +142,85 @@ export const INITIAL_CARDS: RFIDCard[] = [
 ];
 
 export const INITIAL_ACCESS_LOGS: AccessLog[] = [
-  { id: "L001", cardId: "A1B2C3D4", timestamp: "2026-04-25T14:30:00Z", result: "success", drawerId: "DRW-001" },
-  { id: "L002", cardId: "I9J0K1L2", timestamp: "2026-04-25T14:25:00Z", result: "denied", drawerId: "DRW-001" },
-  { id: "L003", cardId: "E5F6G7H8", timestamp: "2026-04-25T09:15:00Z", result: "success", drawerId: "DRW-001" },
-  { id: "L004", cardId: "Q7R8S9T0", timestamp: "2026-04-25T09:10:00Z", result: "incident", incidentType: "forcedOpening", drawerId: "DRW-002" },
-  { id: "L005", cardId: "M3N4O5P6", timestamp: "2026-04-24T16:30:00Z", result: "success", drawerId: "DRW-002" },
-  { id: "L006", cardId: "remote_unlock", timestamp: "2026-04-24T16:45:00Z", result: "success", drawerId: "DRW-003" },
+  {
+    id: "L001",
+    cardId: "A1B2C3D4",
+    timestamp: "2026-04-25T14:30:00Z",
+    result: "success",
+    drawerId: "DRW-001",
+  },
+  {
+    id: "L002",
+    cardId: "I9J0K1L2",
+    timestamp: "2026-04-25T14:25:00Z",
+    result: "denied",
+    drawerId: "DRW-001",
+  },
+  {
+    id: "L003",
+    cardId: "E5F6G7H8",
+    timestamp: "2026-04-25T09:15:00Z",
+    result: "success",
+    drawerId: "DRW-001",
+  },
+  {
+    id: "L004",
+    cardId: "Q7R8S9T0",
+    timestamp: "2026-04-25T09:10:00Z",
+    result: "incident",
+    incidentType: "forcedOpening",
+    drawerId: "DRW-002",
+  },
+  {
+    id: "L005",
+    cardId: "M3N4O5P6",
+    timestamp: "2026-04-24T16:30:00Z",
+    result: "success",
+    drawerId: "DRW-002",
+  },
+  {
+    id: "L006",
+    cardId: "remote_unlock",
+    timestamp: "2026-04-24T16:45:00Z",
+    result: "success",
+    drawerId: "DRW-003",
+  },
 ];
 
 export const INITIAL_SYSTEM_LOGS: SystemLog[] = [
-  { id: "S001", timestamp: "2026-04-25T14:30:00Z", type: "info", message: "Přístup povolen – karta A1B2C3D4", drawerId: "DRW-001" },
-  { id: "S002", timestamp: "2026-04-25T14:25:00Z", type: "warning", message: "Přístup zamítnut – neautorizovaná karta I9J0K1L2", drawerId: "DRW-001" },
-  { id: "S003", timestamp: "2026-04-25T09:10:00Z", type: "error", message: "Detekován incident – pokus o vniknutí neznámou kartou Q7R8S9T0", drawerId: "DRW-002" },
-  { id: "S004", timestamp: "2026-04-24T16:45:00Z", type: "info", message: "Odemčeno na dálku", drawerId: "DRW-003" },
-  { id: "S005", timestamp: "2026-04-24T10:00:00Z", type: "info", message: "Karta přidána – U1V2W3X4", drawerId: "DRW-003" },
+  {
+    id: "S001",
+    timestamp: "2026-04-25T14:30:00Z",
+    type: "info",
+    message: "Přístup povolen – karta A1B2C3D4",
+    drawerId: "DRW-001",
+  },
+  {
+    id: "S002",
+    timestamp: "2026-04-25T14:25:00Z",
+    type: "warning",
+    message: "Přístup zamítnut – neautorizovaná karta I9J0K1L2",
+    drawerId: "DRW-001",
+  },
+  {
+    id: "S003",
+    timestamp: "2026-04-25T09:10:00Z",
+    type: "error",
+    message: "Detekován incident – pokus o vniknutí neznámou kartou Q7R8S9T0",
+    drawerId: "DRW-002",
+  },
+  {
+    id: "S004",
+    timestamp: "2026-04-24T16:45:00Z",
+    type: "info",
+    message: "Odemčeno na dálku",
+    drawerId: "DRW-003",
+  },
+  {
+    id: "S005",
+    timestamp: "2026-04-24T10:00:00Z",
+    type: "info",
+    message: "Karta přidána – U1V2W3X4",
+    drawerId: "DRW-003",
+  },
 ];

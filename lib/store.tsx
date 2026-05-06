@@ -1,171 +1,133 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useState } from "react";
-import { deviceService } from "./api";
-import {
-  INITIAL_CARDS,
-  INITIAL_DRAWERS,
-  INITIAL_ACCESS_LOGS,
-  INITIAL_SYSTEM_LOGS,
-  uid,
-} from "./mockDb";
-import { Drawer, RFIDCard, AccessLog, SystemLog, Toast } from "./types";
+import { INITIAL_DEVICE, INITIAL_NOTIFICATIONS, INITIAL_DRAWERS, uid } from "./mockDb";
+import { Card, AccessLog, Device, Notification, Toast, Drawer } from "./types";
+import { cardService } from "./cardService";
+import { logService } from "./logService";
 
 interface StoreCtx {
-  drawers: Drawer[];
-  cards: RFIDCard[];
-  accessLogs: AccessLog[];
-  systemLogs: SystemLog[];
+  cards: Card[];
+  logs: AccessLog[];
+  device: Device;
+  notifications: Notification[];
   toasts: Toast[];
-
-  fetchDrawers: () => Promise<void>;
-  addDrawer: (drawer: Omit<Drawer, "id" | "createdAt" | "updatedAt">) => string;
-  updateDrawer: (id: string, patch: Partial<Drawer>) => void;
-  deleteDrawer: (id: string) => void;
-
-  addCard: (card: Omit<RFIDCard, "id" | "createdAt" | "updatedAt">) => void;
-  updateCard: (id: string, patch: Partial<RFIDCard>) => void;
-  deleteCard: (id: string) => void;
-
-  addAccessLog: (log: Omit<AccessLog, "id">) => void;
-  addSystemLog: (log: Omit<SystemLog, "id">) => void;
-
+  drawers: Drawer[];
+  fetchCards: () => Promise<void>;
+  fetchLogs: () => Promise<void>;
+  addCard: (data: any) => Promise<void>;
+  updateCard: (id: string, patch: Partial<Card>) => void;
+  deleteCard: (id: string) => Promise<void>;
+  addLog: (log: Omit<AccessLog, "id">) => void;
+  toggleDevice: () => void;
   addToast: (msg: string, type?: Toast["type"]) => void;
   removeToast: (id: string) => void;
-
+  addNotification: (msg: string, type?: Notification["type"]) => void;
+  addDrawer: (drawer: Drawer) => void;
+  updateDrawer: (id: string, patch: Partial<Drawer>) => void;
+  deleteDrawer: (id: string) => void;
 }
 
 const StoreContext = createContext<StoreCtx | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [drawers, setDrawers] = useState<Drawer[]>(INITIAL_DRAWERS);
-  const [cards, setCards] = useState<RFIDCard[]>(INITIAL_CARDS);
-  const [accessLogs, setAccessLogs] =
-    useState<AccessLog[]>(INITIAL_ACCESS_LOGS);
-  const [systemLogs, setSystemLogs] =
-    useState<SystemLog[]>(INITIAL_SYSTEM_LOGS);
+  const [cards, setCards] = useState<Card[]>([]);
+  const [logs, setLogs] = useState<AccessLog[]>([]);
+  const [device, setDevice] = useState<Device>(INITIAL_DEVICE);
+  const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [drawers, setDrawers] = useState<Drawer[]>(INITIAL_DRAWERS);
 
-  // ─── Drawers ──────────────────────────────────────────────────────────────
-const fetchDrawers = useCallback(async () => {
-  try {
-    const apiDrawers = await deviceService.getAll(); // Get data from endpoint
-    
-    setDrawers((prev) => {
-
-      // Smart merge -> mock data and real data !!DON'T REMOVE!!
-      const existingIds = new Set(INITIAL_DRAWERS.map(d => d.id));
-      const uniqueApiDrawers = apiDrawers.filter(d => !existingIds.has(d.id));
-      
-      return [...INITIAL_DRAWERS, ...uniqueApiDrawers];
-    });
-  } catch (error) {
-    console.error("Fetch error:", error);
-    addToast("Nepodařilo se načíst nová data", "error");
-  }
-}, []);
-
-  const addDrawer = useCallback(
-    (data: Omit<Drawer, "id" | "createdAt" | "updatedAt">): string => {
-      const now = new Date().toISOString();
-      const id = `DRW-${uid()}`;
-      setDrawers((prev) => [
-        ...prev,
-        { ...data, id, createdAt: now, updatedAt: now },
-      ]);
-      return id;
-    },
-    [],
-  );
-
-  const updateDrawer = useCallback((id: string, patch: Partial<Drawer>) => {
-    setDrawers((prev) =>
-      prev.map((d) =>
-        d.id === id
-          ? { ...d, ...patch, updatedAt: new Date().toISOString() }
-          : d,
-      ),
-    );
+  const fetchCards = useCallback(async () => {
+    try {
+      const data = await cardService.getAllCards();
+      setCards(data);
+    } catch (err) {
+      addToast("Karty se nenačetly", "error");
+    }
   }, []);
 
-  const deleteDrawer = useCallback((id: string) => {
-    setDrawers((prev) => prev.filter((d) => d.id !== id));
-    setCards((prev) => prev.filter((c) => c.drawerId !== id));
-    setAccessLogs((prev) => prev.filter((l) => l.drawerId !== id));
-    setSystemLogs((prev) => prev.filter((l) => l.drawerId !== id));
+  const addCard = useCallback(async (cardData: any) => {
+    try {
+      const newCard = await cardService.createCard(cardData);
+      setCards((prev) => [...prev, newCard]);
+      addToast("Karta přidána", "success");
+    } catch (err) {
+      addToast("Nepovedlo se přidat kartu", "error");
+    }
   }, []);
 
-  // ─── Cards ────────────────────────────────────────────────────────────────
-  const addCard = useCallback(
-    (data: Omit<RFIDCard, "id" | "createdAt" | "updatedAt">) => {
-      const now = new Date().toISOString();
-      setCards((prev) => [
-        ...prev,
-        { ...data, id: uid(), createdAt: now, updatedAt: now },
-      ]);
-    },
-    [],
-  );
+  const deleteCard = useCallback(async (id: string) => {
+    try {
+      await cardService.deleteCard(id);
+      setCards((prev) => prev.filter((c) => c.id !== id));
+      addToast("Karta pryč", "success");
+    } catch (err) {
+      addToast("Chyba při mazání", "error");
+    }
+  }, []);
 
-  const updateCard = useCallback((id: string, patch: Partial<RFIDCard>) => {
+  const fetchLogs = useCallback(async () => {
+    try {
+      const res = await logService.getAll();
+      setLogs(res);
+    } catch (e) {
+      addToast("Logy nejdou načíst", "error");
+    }
+  }, []);
+
+  const addLog = useCallback((log: Omit<AccessLog, "id">) => {
+    setLogs((prev) => [{ ...log, id: uid() }, ...prev]);
+  }, []);
+
+  const updateCard = useCallback((id: string, patch: Partial<Card>) => {
     setCards((prev) =>
-      prev.map((c) =>
-        c.id === id
-          ? { ...c, ...patch, updatedAt: new Date().toISOString() }
-          : c,
-      ),
+      prev.map((c) => (c.id === id ? { ...c, ...patch, updatedAt: new Date().toISOString() } : c))
     );
   }, []);
 
-  const deleteCard = useCallback((id: string) => {
-    setCards((prev) => prev.filter((c) => c.id !== id));
+  const toggleDevice = useCallback(() => {
+    setDevice((d) => {
+      const next = d.status === "online" ? "offline" : "online";
+      return {
+        ...d,
+        status: next,
+        lastSync: next === "online" ? new Date().toISOString() : d.lastSync,
+        pendingEvents: next === "offline" ? 3 : 0,
+      };
+    });
   }, []);
 
-  // ─── Logs ─────────────────────────────────────────────────────────────────
-  const addAccessLog = useCallback((log: Omit<AccessLog, "id">) => {
-    setAccessLogs((prev) => [{ ...log, id: uid() }, ...prev]);
+  const addToast = useCallback((msg: string, type: Toast["type"] = "success") => {
+    const id = uid();
+    setToasts((prev) => [...prev, { id, msg, type }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4500);
   }, []);
-
-  const addSystemLog = useCallback((log: Omit<SystemLog, "id">) => {
-    setSystemLogs((prev) => [{ ...log, id: uid() }, ...prev]);
-  }, []);
-
-  // ─── Toasts ───────────────────────────────────────────────────────────────
-  const addToast = useCallback(
-    (msg: string, type: Toast["type"] = "success") => {
-      const id = uid();
-      setToasts((prev) => [...prev, { id, msg, type }]);
-      setTimeout(
-        () => setToasts((prev) => prev.filter((t) => t.id !== id)),
-        4500,
-      );
-    },
-    [],
-  );
 
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  const addNotification = useCallback((msg: string, type: Notification["type"] = "info") => {
+    setNotifications((prev) => [
+      { id: uid(), type, msg, time: new Date().toISOString() },
+      ...prev,
+    ]);
+  }, []);
+
+  const addDrawer = (drawer: Drawer) => setDrawers((p) => [...p, drawer]);
+  const updateDrawer = (id: string, patch: Partial<Drawer>) => {
+    setDrawers((p) => p.map((d) => (d.id === id ? { ...d, ...patch } : d)));
+  };
+  const deleteDrawer = (id: string) => setDrawers((p) => p.filter((d) => d.id !== id));
+
   return (
     <StoreContext.Provider
       value={{
-        drawers,
-        cards,
-        accessLogs,
-        systemLogs,
-        toasts,
-        fetchDrawers,
-        addDrawer,
-        updateDrawer,
-        deleteDrawer,
-        addCard,
-        updateCard,
-        deleteCard,
-        addAccessLog,
-        addSystemLog,
-        addToast,
-        removeToast,
+        cards, logs, device, notifications, toasts, drawers,
+        fetchCards, fetchLogs, addCard, updateCard, deleteCard,
+        addLog, toggleDevice, addToast, removeToast, addNotification,
+        addDrawer, updateDrawer, deleteDrawer,
       }}
     >
       {children}
@@ -175,6 +137,6 @@ const fetchDrawers = useCallback(async () => {
 
 export function useStore() {
   const ctx = useContext(StoreContext);
-  if (!ctx) throw new Error("useStore must be used within StoreProvider");
+  if (!ctx) throw new Error("useStore error");
   return ctx;
 }
